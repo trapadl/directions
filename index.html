@@ -1,244 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>trap. — directions</title>
 
     <!--
-      ▸ FONT – Acumin Variable is proprietary. If you have the files, drop them in the same folder
-        and keep this @font‑face. Otherwise delete it and rely on the fall‑backs.
+      type is one‑file, github‑pages ready. add your acumin variable files next to this html and keep
+      the @font‑face, or delete the rule if you are happy with system fallbacks.
     -->
     <style>
       @font-face {
-        font-family: "Acumin Variable";
-        src: url("AcuminVariableConcept.otf") format("opentype");
+        font-family: "acumin variable";
+        src: url("acumin-variable.woff2") format("woff2");
         font-weight: 100 900;
+        font-style: normal;
         font-display: swap;
       }
 
       :root {
-        --bg: #f9f6f6; /* paper white */
-        --fg: #050505; /* almost black */
+        --bg: #f9f6f6;
+        --fg: #050505;
       }
 
+      /* reset */
       * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
       }
 
       html,
       body {
         height: 100%;
         width: 100%;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: var(--bg);
         color: var(--fg);
-        font-family: "Acumin Variable", "Helvetica Neue", Arial, sans-serif;
+        font-family: "acumin variable", "helvetica neue", arial, sans-serif;
+        font-variation-settings: "wght" 400;
         -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        max-width: 420px;
+        width: 90%;
         display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden; /* no scrolling */
+        flex-direction: column;
+        gap: 2.5rem;
       }
 
-      /* layout container */
-      #wrapper {
-        text-align: center;
-        max-width: 90vw;
-      }
-
-      /* logo placeholder */
-      #logo {
-        width: 180px;
+      img.logo {
+        width: 160px;
         height: auto;
-        margin: 0 auto 1.5rem;
         display: block;
+        margin: 0 auto;
       }
 
       h1,
-      h2 {
-        font-weight: 800; /* bold */
-        margin-bottom: 0.4em;
+      h2,
+      a,
+      button,
+      li {
+        font-variation-settings: "wght" 700;
+        font-size: clamp(1rem, 4vw, 1.75rem);
+        line-height: 1.2;
       }
 
-      p {
-        font-size: 1.2rem;
-        font-weight: 400; /* regular */
+      p,
+      small {
+        font-variation-settings: "wght" 400;
+        font-size: clamp(0.9rem, 3vw, 1.25rem);
       }
 
       button {
-        margin-top: 1.4rem;
-        padding: 0.8rem 1.8rem;
-        border: none;
+        background: transparent;
+        border: 1px solid var(--fg);
+        padding: 0.65em 1.2em;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-transform: lowercase;
+      }
+
+      button:hover,
+      button:active {
         background: var(--fg);
         color: var(--bg);
-        font-family: inherit;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
       }
 
-      button:active {
-        transform: scale(0.97);
+      ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
       }
 
+      /* hidden utility */
       .hidden {
         display: none !important;
       }
     </style>
   </head>
-
   <body>
-    <div id="wrapper">
-      <img id="logo" src="logo.png" alt="trap. logo" />
-      <h1 id="headline"></h1>
-      <p id="sub"></p>
-      <button id="cta" class="hidden"></button>
-    </div>
+    <main>
+      <!-- logo placeholder; swap with your svg/png as needed -->
+      <img src="logo.png" alt="trap. logo" class="logo" />
+
+      <!-- countdown section -->
+      <section id="countdown-section" class="hidden">
+        <p><span id="countdown-text">trap. opens in <span id="countdown"></span></span></p>
+      </section>
+
+      <!-- directions section -->
+      <section id="directions-section" class="hidden">
+        <ul id="steps">
+          <li data-step="1">
+            <h1 id="step1-title">trap. is open.</h1>
+            <p>walk west on currie st to the corner of burnett st (sofitel hotel).</p>
+            <button class="cta" data-next="2">next</button>
+          </li>
+          <li data-step="2" class="hidden">
+            <h2>step 2</h2>
+            <p>turn right onto burnett st and walk down to first laneway on your right.</p>
+            <button class="cta" data-next="3">next</button>
+          </li>
+          <li data-step="3" class="hidden">
+            <h2>step 3</h2>
+            <p>turn onto cold chisel lane and down to trap.</p>
+            <!-- no cta here by design -->
+          </li>
+        </ul>
+      </section>
+    </main>
 
     <script>
-      // ————————————————
-      //  SCHEDULE (Adelaide time)
-      //  dow: 0=Sun … 6=Sat
-      //  Use "24" & "26" hrs to indicate close after midnight
-      // ————————————————
-      const SCHEDULE = [
-        { dow: 3, start: "18:00", end: "24:00" }, // Wed 18‑24
-        { dow: 4, start: "18:00", end: "24:00" }, // Thu 18‑24
-        { dow: 5, start: "16:00", end: "26:00" }, // Fri 16‑02
-        { dow: 6, start: "16:00", end: "26:00" }, // Sat 16‑02
-      ];
+      //  state manual override. 1 = real behaviour, 0 = inverted behaviour.
+      const STATE = 0; // 👉 change to 0 when you want to force the opposite state
 
-      const TZ = "Australia/Adelaide";
-
-      /*–––– date helpers ––––*/
-      function toLocal(dateUTC) {
-        // Convert a UTC date → local Date object in the desired TZ (hacky but works cross‑browser)
-        const parts = new Intl.DateTimeFormat("en-CA", {
-          timeZone: TZ,
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
-          .formatToParts(dateUTC)
-          .reduce((acc, p) => ((acc[p.type] = p.value), acc), {});
-        return new Date(
-          `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`
-        );
+      /* helper – get current adelaide time as Date object */
+      function getAdelaideNow() {
+        const now = new Date();
+        // Intl toParts gives correct tz diff
+        const tzDate = now.toLocaleString("en-US", {
+          timeZone: "Australia/Adelaide",
+        });
+        return new Date(tzDate);
       }
 
-      function parseTime(base, targetDow, timeStr) {
-        const [hrRaw, min] = timeStr.split(":" ).map(Number);
-        const carry = Math.floor(hrRaw / 24);
-        const hour = hrRaw % 24;
+      /* returns true if bar is open at a given date */
+      function isBarOpen(d) {
+        const day = d.getDay(); // 0‑sun, 1‑mon ... 6‑sat
+        const hour = d.getHours();
+        const minutes = d.getMinutes();
 
-        const d = new Date(base);
-        const diff = (targetDow - d.getDay() + 7) % 7; // days until the target DOW
-        d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() + diff + carry);
-        d.setHours(hour, min, 0, 0);
-        return d;
+        // wed (3), thu (4) 18:00‑24:00
+        if ((day === 3 || day === 4) && hour >= 18) return true;
+
+        // fri (5) 16:00‑24:00 + carry into sat 0‑1
+        if (day === 5 && hour >= 16) return true;
+        if (day === 6 && hour < 2 && d.getDate() === new Date(d).setDate(d.getDate())) return true;
+
+        // sat (6) 16:00‑24:00 + carry into sun 0‑1
+        if (day === 6 && hour >= 16) return true;
+        if (day === 0 && hour < 2) return true;
+
+        return false;
       }
 
-      function getStatus(now) {
-        // Is open?
-        for (const entry of SCHEDULE) {
-          const open = parseTime(now, entry.dow, entry.start);
-          const close = parseTime(now, entry.dow, entry.end);
-          if (now >= open && now < close) {
-            return { open: true };
-          }
+      /* calculate next opening Date */
+      function nextOpenTime(d) {
+        const candidate = new Date(d);
+        // iterate hours until open found (safe worst‑case < 7*24)  
+        for (let i = 0; i < 24 * 7; i++) {
+          candidate.setHours(candidate.getHours() + 1, 0, 0, 0);
+          if (isBarOpen(candidate)) return candidate;
         }
-        // Otherwise find next opening
-        let soonest = null;
-        for (const entry of SCHEDULE) {
-          let open = parseTime(now, entry.dow, entry.start);
-          if (open < now) open.setDate(open.getDate() + 7); // next week
-          if (!soonest || open < soonest) soonest = open;
-        }
-        return { open: false, next: soonest };
+        return null;
       }
 
-      /*–––– UI ––––*/
-      const headline = document.getElementById("headline");
-      const sub = document.getElementById("sub");
-      const cta = document.getElementById("cta");
+      /* initialise */
+      const now = getAdelaideNow();
+      let open = isBarOpen(now);
 
-      const steps = [
-        {
-          title: "trap. is open.",
-          body:
-            "Walk west on Currie St to the corner of Burnett St (Sofitel Hotel).",
-          cta: "Got it",
-        },
-        {
-          title: "",
-          body:
-            "Turn right onto Burnett St and walk down to the first laneway on your right.",
-          cta: "Next",
-        },
-        {
-          title: "",
-          body: "Turn onto Cold Chisel Lane and down to trap.",
-          cta: null,
-        },
-      ];
+      // manual override inversion if STATE === 0
+      if (STATE === 0) open = !open;
 
-      let stepIndex = 0;
-      let inStepMode = false;
+      const countdownSection = document.getElementById("countdown-section");
+      const directionsSection = document.getElementById("directions-section");
 
-      function showStep() {
-        const s = steps[stepIndex];
-        headline.textContent = s.title;
-        sub.textContent = s.body;
-        if (s.cta) {
-          cta.textContent = s.cta;
-          cta.classList.remove("hidden");
-        } else {
-          cta.classList.add("hidden");
+      if (open) {
+        directionsSection.classList.remove("hidden");
+        // sequential reveal logic
+        document.querySelectorAll("button.cta").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const next = btn.dataset.next;
+            document.querySelector(`li[data-step="${next}"]`).classList.remove("hidden");
+            btn.parentElement.classList.add("hidden");
+          });
+        });
+      } else {
+        countdownSection.classList.remove("hidden");
+        const target = nextOpenTime(now);
+        if (target) {
+          const countdownEl = document.getElementById("countdown");
+          const tick = () => {
+            const diff = target - getAdelaideNow();
+            if (diff <= 0) return location.reload();
+            const hrs = String(Math.floor(diff / 3.6e6)).padStart(2, "0");
+            const mins = String(Math.floor((diff % 3.6e6) / 6e4)).padStart(2, "0");
+            const secs = String(Math.floor((diff % 6e4) / 1e3)).padStart(2, "0");
+            countdownEl.textContent = `${hrs}:${mins}:${secs}`;
+          };
+          tick();
+          setInterval(tick, 1000);
         }
       }
-
-      cta.addEventListener("click", () => {
-        if (!inStepMode) return;
-        stepIndex = Math.min(stepIndex + 1, steps.length - 1);
-        showStep();
-      });
-
-      function pad(n) {
-        return String(n).padStart(2, "0");
-      }
-
-      function render() {
-        const now = toLocal(new Date());
-        const status = getStatus(now);
-
-        if (status.open) {
-          if (!inStepMode) {
-            inStepMode = true;
-            stepIndex = 0;
-            showStep();
-          }
-        } else {
-          inStepMode = false;
-          const diffSec = Math.round((status.next - now) / 1000);
-          const h = Math.floor(diffSec / 3600);
-          const m = Math.floor((diffSec % 3600) / 60);
-          const s = diffSec % 60;
-
-          headline.textContent = "trap. opens in";
-          sub.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
-          cta.classList.add("hidden");
-        }
-      }
-
-      render();
-      setInterval(render, 1000); // keep ticking
     </script>
   </body>
 </html>
