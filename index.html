@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>trap. — directions</title>
 
-    <!--
-      type is one‑file, github‑pages ready. add your acumin variable files next to this html and keep
-      the @font‑face, or delete the rule if you are happy with system fallbacks.
-    -->
+    <!-- one‑file github pages build. drop your acumin variable fonts in root if licensed.  -->
     <style>
       @font-face {
         font-family: "acumin variable";
@@ -53,7 +50,7 @@
         width: 90%;
         display: flex;
         flex-direction: column;
-        gap: 2.5rem;
+        gap: 2.75rem;
       }
 
       img.logo {
@@ -63,75 +60,114 @@
         margin: 0 auto;
       }
 
+      /* headings & body copy – all lower‑case */
       h1,
       h2,
       a,
       button,
       li {
         font-variation-settings: "wght" 700;
-        font-size: clamp(1rem, 4vw, 1.75rem);
-        line-height: 1.2;
+        font-size: clamp(1.1rem, 4.4vw, 1.9rem);
+        line-height: 1.25;
+        text-transform: lowercase;
       }
-
       p,
       small {
         font-variation-settings: "wght" 400;
-        font-size: clamp(0.9rem, 3vw, 1.25rem);
-      }
-
-      button {
-        background: transparent;
-        border: 1px solid var(--fg);
-        padding: 0.65em 1.2em;
-        cursor: pointer;
-        transition: background 0.2s;
+        font-size: clamp(0.92rem, 3.1vw, 1.28rem);
         text-transform: lowercase;
       }
 
-      button:hover,
-      button:active {
+      /* button & link styling */
+      button,
+      a.cta-link {
         background: var(--fg);
         color: var(--bg);
+        border: none;
+        padding: 0.7em 1.25em;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.25s ease;
+      }
+      button:hover,
+      button:active,
+      a.cta-link:hover,
+      a.cta-link:active {
+        transform: scale(0.97);
       }
 
       ul {
         list-style: none;
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: 2.25rem;
       }
 
-      /* hidden utility */
+      /* spacing between instruction and cta */
+      li p {
+        margin-bottom: 1.25rem; /* new line gap */
+      }
+
+      /* hide helper */
       .hidden {
         display: none !important;
+      }
+
+      /* slide animations */
+      @keyframes slide-in {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes slide-out {
+        to {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+      }
+
+      .slide-in {
+        animation: slide-in 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+      }
+      .slide-out {
+        animation: slide-out 0.35s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
       }
     </style>
   </head>
   <body>
     <main>
-      <!-- logo placeholder; swap with your svg/png as needed -->
+      <!-- logo placeholder -->
       <img src="logo.png" alt="trap. logo" class="logo" />
+
+      <!-- open badge (inserted when directions are shown) -->
+      <div id="open-badge" class="hidden" style="text-align:center;">
+        <h1 style="font-size:clamp(1.3rem,5vw,2.2rem);">is open</h1>
+      </div>
 
       <!-- countdown section -->
       <section id="countdown-section" class="hidden">
-        <p><span id="countdown-text">opens in <span id="countdown"></span></span></p>
+        <p>opens in <span id="countdown"></span></p>
       </section>
 
       <!-- directions section -->
       <section id="directions-section" class="hidden">
         <ul id="steps">
           <li data-step="1">
-            <h1 id="step1-title">trap. is open.</h1>
             <p>walk west on currie st to the corner of burnett st (sofitel hotel).</p>
-            <button class="cta" data-next="2">next</button>
+            <button class="cta" data-next="2">i've done that</button>
           </li>
           <li data-step="2" class="hidden">
-            <h2>step 2</h2>
             <p>turn right onto burnett st and walk down to first laneway on your right.</p>
-            <button class="cta" data-next="3">next</button>
+            <button class="cta" data-next="3">ok, done that too.</button>
           </li>
           <li data-step="3" class="hidden">
-            <h2>step 3</h2>
             <p>turn onto cold chisel lane and down to trap.</p>
             <!-- no cta here by design -->
           </li>
@@ -140,83 +176,84 @@
     </main>
 
     <script>
-      //  state manual override. 1 = real behaviour, 0 = inverted behaviour.
-      const STATE = 0; // 👉 change to 0 when you want to force the opposite state
+      /* manual override – 1 = normal behaviour, 0 = inverse behaviour */
+      const STATE = 0;
 
-      /* helper – get current adelaide time as Date object */
+      /* get adelaide now */
       function getAdelaideNow() {
         const now = new Date();
-        // Intl toParts gives correct tz diff
         const tzDate = now.toLocaleString("en-US", {
           timeZone: "Australia/Adelaide",
         });
         return new Date(tzDate);
       }
 
-      /* returns true if bar is open at a given date */
+      /* business hours helper */
       function isBarOpen(d) {
-        const day = d.getDay(); // 0‑sun, 1‑mon ... 6‑sat
-        const hour = d.getHours();
-        const minutes = d.getMinutes();
+        const day = d.getDay();
+        const h = d.getHours();
 
-        // wed (3), thu (4) 18:00‑24:00
-        if ((day === 3 || day === 4) && hour >= 18) return true;
+        // wed = 3, thu = 4 : 18‑24
+        if ((day === 3 || day === 4) && h >= 18) return true;
 
-        // fri (5) 16:00‑24:00 + carry into sat 0‑1
-        if (day === 5 && hour >= 16) return true;
-        if (day === 6 && hour < 2 && d.getDate() === new Date(d).setDate(d.getDate())) return true;
+        // fri 16‑24, spill into sat 0‑1
+        if (day === 5 && h >= 16) return true;
+        if (day === 6 && h < 2 && d.getDay() === 6) return true; // 0‑1 on sat early hours
 
-        // sat (6) 16:00‑24:00 + carry into sun 0‑1
-        if (day === 6 && hour >= 16) return true;
-        if (day === 0 && hour < 2) return true;
+        // sat 16‑24, spill into sun 0‑1
+        if (day === 6 && h >= 16) return true;
+        if (day === 0 && h < 2) return true;
 
         return false;
       }
 
-      /* calculate next opening Date */
       function nextOpenTime(d) {
-        const candidate = new Date(d);
-        // iterate hours until open found (safe worst‑case < 7*24)  
+        const probe = new Date(d);
         for (let i = 0; i < 24 * 7; i++) {
-          candidate.setHours(candidate.getHours() + 1, 0, 0, 0);
-          if (isBarOpen(candidate)) return candidate;
+          probe.setHours(probe.getHours() + 1, 0, 0, 0);
+          if (isBarOpen(probe)) return probe;
         }
         return null;
       }
 
-      /* initialise */
       const now = getAdelaideNow();
       let open = isBarOpen(now);
-
-      // manual override inversion if STATE === 0
-      if (STATE === 0) open = !open;
+      if (STATE === 0) open = !open; // inversion
 
       const countdownSection = document.getElementById("countdown-section");
       const directionsSection = document.getElementById("directions-section");
+      const openBadge = document.getElementById("open-badge");
 
       if (open) {
         directionsSection.classList.remove("hidden");
-        // sequential reveal logic
+        openBadge.classList.remove("hidden");
+        // cta logic with slide animation
         document.querySelectorAll("button.cta").forEach((btn) => {
           btn.addEventListener("click", () => {
-            const next = btn.dataset.next;
-            document.querySelector(`li[data-step="${next}"]`).classList.remove("hidden");
-            btn.parentElement.classList.add("hidden");
+            const currLi = btn.parentElement;
+            currLi.classList.add("slide-out");
+            const next = document.querySelector(`li[data-step="${btn.dataset.next}"]`);
+            if (next) {
+              next.classList.remove("hidden");
+              next.classList.add("slide-in");
+            }
+            // after animation hide completely
+            setTimeout(() => currLi.classList.add("hidden"), 350);
           });
         });
       } else {
         countdownSection.classList.remove("hidden");
         const target = nextOpenTime(now);
+        const countdownEl = document.getElementById("countdown");
         if (target) {
-          const countdownEl = document.getElementById("countdown");
-          const tick = () => {
+          function tick() {
             const diff = target - getAdelaideNow();
             if (diff <= 0) return location.reload();
             const hrs = String(Math.floor(diff / 3.6e6)).padStart(2, "0");
             const mins = String(Math.floor((diff % 3.6e6) / 6e4)).padStart(2, "0");
             const secs = String(Math.floor((diff % 6e4) / 1e3)).padStart(2, "0");
             countdownEl.textContent = `${hrs}:${mins}:${secs}`;
-          };
+          }
           tick();
           setInterval(tick, 1000);
         }
