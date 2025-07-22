@@ -1,156 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>trap. directions</title>
-  <style>
-    body {
-      margin: 0;
-      background: #f9f6f6;
-      color: #050505;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>trap. — directions</title>
 
-    img.logo {
-      width: 100px;
-      margin-bottom: 1rem;
-    }
-
-    .step {
-      max-width: 90%;
-      margin-bottom: 2rem;
-    }
-
-    .step h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0 0 0.5rem;
-    }
-
-    .step p {
-      font-size: 1rem;
-      margin: 0.25rem 0;
-    }
-
-    .cta {
-      font-weight: 700;
-      margin-top: 1rem;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    .countdown {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <img src="logo.png" alt="trap. logo" class="logo" />
-  <div id="content"></div>
-
-  <script>
-    const openingHours = [
-      { day: 3, open: 18, close: 24 }, // Wednesday
-      { day: 4, open: 18, close: 24 }, // Thursday
-      { day: 5, open: 16, close: 26 }, // Friday (26 = 2am Saturday)
-      { day: 6, open: 16, close: 26 }  // Saturday
-    ];
-
-    function isBarOpen(now) {
-      const day = now.getDay();
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const decimalTime = hour + minute / 60;
-
-      for (const slot of openingHours) {
-        const closeDay = slot.close > 24 ? (slot.day + 1) % 7 : slot.day;
-        const closeTime = slot.close > 24 ? slot.close - 24 : slot.close;
-
-        if (slot.day === day && decimalTime >= slot.open) return true;
-        if (closeDay === day && decimalTime < closeTime) return true;
+    <!--
+      ▸ FONT – Acumin Variable is proprietary. If you have the files, drop them in the same folder
+        and keep this @font‑face. Otherwise delete it and rely on the fall‑backs.
+    -->
+    <style>
+      @font-face {
+        font-family: "Acumin Variable";
+        src: url("AcuminVariableConcept.otf") format("opentype");
+        font-weight: 100 900;
+        font-display: swap;
       }
 
-      return false;
-    }
+      :root {
+        --bg: #f9f6f6; /* paper white */
+        --fg: #050505; /* almost black */
+      }
 
-    function getNextOpening(now) {
-      for (let i = 0; i < 7; i++) {
-        const testDate = new Date(now);
-        testDate.setDate(now.getDate() + i);
-        const day = (now.getDay() + i) % 7;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        const slot = openingHours.find(h => h.day === day);
-        if (slot) {
-          const openTime = new Date(testDate);
-          openTime.setHours(slot.open >= 24 ? slot.open - 24 : slot.open);
-          openTime.setMinutes(0, 0, 0);
-          if (slot.open >= 24) openTime.setDate(openTime.getDate() + 1);
-          if (openTime > now) return openTime;
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Acumin Variable", "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden; /* no scrolling */
+      }
+
+      /* layout container */
+      #wrapper {
+        text-align: center;
+        max-width: 90vw;
+      }
+
+      /* logo placeholder */
+      #logo {
+        width: 180px;
+        height: auto;
+        margin: 0 auto 1.5rem;
+        display: block;
+      }
+
+      h1,
+      h2 {
+        font-weight: 800; /* bold */
+        margin-bottom: 0.4em;
+      }
+
+      p {
+        font-size: 1.2rem;
+        font-weight: 400; /* regular */
+      }
+
+      button {
+        margin-top: 1.4rem;
+        padding: 0.8rem 1.8rem;
+        border: none;
+        background: var(--fg);
+        color: var(--bg);
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      button:active {
+        transform: scale(0.97);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <img id="logo" src="logo.png" alt="trap. logo" />
+      <h1 id="headline"></h1>
+      <p id="sub"></p>
+      <button id="cta" class="hidden"></button>
+    </div>
+
+    <script>
+      // ————————————————
+      //  SCHEDULE (Adelaide time)
+      //  dow: 0=Sun … 6=Sat
+      //  Use "24" & "26" hrs to indicate close after midnight
+      // ————————————————
+      const SCHEDULE = [
+        { dow: 3, start: "18:00", end: "24:00" }, // Wed 18‑24
+        { dow: 4, start: "18:00", end: "24:00" }, // Thu 18‑24
+        { dow: 5, start: "16:00", end: "26:00" }, // Fri 16‑02
+        { dow: 6, start: "16:00", end: "26:00" }, // Sat 16‑02
+      ];
+
+      const TZ = "Australia/Adelaide";
+
+      /*–––– date helpers ––––*/
+      function toLocal(dateUTC) {
+        // Convert a UTC date → local Date object in the desired TZ (hacky but works cross‑browser)
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: TZ,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        })
+          .formatToParts(dateUTC)
+          .reduce((acc, p) => ((acc[p.type] = p.value), acc), {});
+        return new Date(
+          `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`
+        );
+      }
+
+      function parseTime(base, targetDow, timeStr) {
+        const [hrRaw, min] = timeStr.split(":" ).map(Number);
+        const carry = Math.floor(hrRaw / 24);
+        const hour = hrRaw % 24;
+
+        const d = new Date(base);
+        const diff = (targetDow - d.getDay() + 7) % 7; // days until the target DOW
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + diff + carry);
+        d.setHours(hour, min, 0, 0);
+        return d;
+      }
+
+      function getStatus(now) {
+        // Is open?
+        for (const entry of SCHEDULE) {
+          const open = parseTime(now, entry.dow, entry.start);
+          const close = parseTime(now, entry.dow, entry.end);
+          if (now >= open && now < close) {
+            return { open: true };
+          }
+        }
+        // Otherwise find next opening
+        let soonest = null;
+        for (const entry of SCHEDULE) {
+          let open = parseTime(now, entry.dow, entry.start);
+          if (open < now) open.setDate(open.getDate() + 7); // next week
+          if (!soonest || open < soonest) soonest = open;
+        }
+        return { open: false, next: soonest };
+      }
+
+      /*–––– UI ––––*/
+      const headline = document.getElementById("headline");
+      const sub = document.getElementById("sub");
+      const cta = document.getElementById("cta");
+
+      const steps = [
+        {
+          title: "trap. is open.",
+          body:
+            "Walk west on Currie St to the corner of Burnett St (Sofitel Hotel).",
+          cta: "Got it",
+        },
+        {
+          title: "",
+          body:
+            "Turn right onto Burnett St and walk down to the first laneway on your right.",
+          cta: "Next",
+        },
+        {
+          title: "",
+          body: "Turn onto Cold Chisel Lane and down to trap.",
+          cta: null,
+        },
+      ];
+
+      let stepIndex = 0;
+      let inStepMode = false;
+
+      function showStep() {
+        const s = steps[stepIndex];
+        headline.textContent = s.title;
+        sub.textContent = s.body;
+        if (s.cta) {
+          cta.textContent = s.cta;
+          cta.classList.remove("hidden");
+        } else {
+          cta.classList.add("hidden");
         }
       }
-      return null;
-    }
 
-    function updateContent() {
-      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Australia/Adelaide" }));
-      const container = document.getElementById('content');
+      cta.addEventListener("click", () => {
+        if (!inStepMode) return;
+        stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+        showStep();
+      });
 
-      if (isBarOpen(now)) {
-        container.innerHTML = `
-          <div class="step">
-            <h2><img src="logo.png" class="logo" /> is open.</h2>
-            <p>1. Walk west on Currie St to the corner of Burnett St (Sofitel Hotel).</p>
-            <div class="cta" onclick="nextStep(2)">next step →</div>
-          </div>
-        `;
-      } else {
-        const next = getNextOpening(now);
-        if (!next) return container.innerHTML = "<p>Unable to determine next opening time.</p>";
-
-        const diff = Math.floor((next - now) / 1000);
-        const hours = Math.floor(diff / 3600);
-        const minutes = Math.floor((diff % 3600) / 60);
-        const seconds = diff % 60;
-
-        container.innerHTML = `
-          <div class="countdown">
-            <img src="logo.png" class="logo" /><br/>
-            opens in ${hours}h ${minutes}m ${seconds}s
-          </div>
-        `;
+      function pad(n) {
+        return String(n).padStart(2, "0");
       }
-    }
 
-    function nextStep(step) {
-      const container = document.getElementById('content');
-      if (step === 2) {
-        container.innerHTML = `
-          <div class="step">
-            <h2>Step 2</h2>
-            <p>Turn right onto Burnett St and walk down to first laneway on your right.</p>
-            <div class="cta" onclick="nextStep(3)">next step →</div>
-          </div>
-        `;
-      } else if (step === 3) {
-        container.innerHTML = `
-          <div class="step">
-            <h2>Final Step</h2>
-            <p>Turn onto Cold Chisel Lane and down to <img src="logo.png" class="logo" /></p>
-          </div>
-        `;
+      function render() {
+        const now = toLocal(new Date());
+        const status = getStatus(now);
+
+        if (status.open) {
+          if (!inStepMode) {
+            inStepMode = true;
+            stepIndex = 0;
+            showStep();
+          }
+        } else {
+          inStepMode = false;
+          const diffSec = Math.round((status.next - now) / 1000);
+          const h = Math.floor(diffSec / 3600);
+          const m = Math.floor((diffSec % 3600) / 60);
+          const s = diffSec % 60;
+
+          headline.textContent = "trap. opens in";
+          sub.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+          cta.classList.add("hidden");
+        }
       }
-    }
 
-    updateContent();
-    setInterval(updateContent, 1000);
-  </script>
-</body>
+      render();
+      setInterval(render, 1000); // keep ticking
+    </script>
+  </body>
 </html>
