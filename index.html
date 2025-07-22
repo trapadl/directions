@@ -148,7 +148,7 @@
 
       <!-- open badge (inserted when directions are shown) -->
       <div id="open-badge" class="hidden" style="text-align:center;">
-        <h1 style="font-size:clamp(1.3rem,5vw,2.2rem);">is open</h1>
+        <h1 style="font-size:clamp(1.3rem,5vw,2.2rem);">is open.</h1>
       </div>
 
       <!-- countdown section -->
@@ -161,11 +161,11 @@
         <ul id="steps">
           <li data-step="1">
             <p>walk west on currie st to the corner of burnett st (sofitel hotel).</p>
-            <button class="cta" data-next="2">i've done that</button>
+            <button class="cta" data-next="2">i'm here!</button>
           </li>
           <li data-step="2" class="hidden">
             <p>turn right onto burnett st and walk down to first laneway on your right.</p>
-            <button class="cta" data-next="3">ok, done that too.</button>
+            <button class="cta" data-next="3">ok, done that too...</button>
           </li>
           <li data-step="3" class="hidden">
             <p>turn onto cold chisel lane and down to trap.</p>
@@ -177,7 +177,7 @@
 
     <script>
       /* manual override – 1 = normal behaviour, 0 = inverse behaviour */
-      const STATE = 0;
+      const STATE = 1;
 
       /* get adelaide now */
       function getAdelaideNow() {
