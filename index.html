@@ -109,7 +109,7 @@
         margin-bottom: 1.25rem; /* new line gap */
       }
 
-      /* countdown centre */
+      /* center countdown section */
       #countdown-section {
         text-align: center;
       }
@@ -153,12 +153,12 @@
 
       <!-- open badge (inserted when directions are shown) -->
       <div id="open-badge" class="hidden" style="text-align:center;">
-        <h1 style="font-size:clamp(1.3rem,5vw,2.2rem);">is open</h1>
+        <h1 style="font-size:clamp(1.3rem,5vw,2.2rem);">is open.</h1>
       </div>
 
       <!-- countdown section -->
       <section id="countdown-section" class="hidden">
-        <p>trap. opens in <span id="countdown"></span></p>
+        <p>opens in <span id="countdown"></span></p>
       </section>
 
       <!-- directions section -->
@@ -166,11 +166,11 @@
         <ul id="steps">
           <li data-step="1">
             <p>walk west on currie st to the corner of burnett st (sofitel hotel).</p>
-            <button class="cta" data-next="2">i've done that</button>
+            <button class="cta" data-next="2">i'm here!</button>
           </li>
           <li data-step="2" class="hidden">
             <p>turn right onto burnett st and walk down to first laneway on your right.</p>
-            <button class="cta" data-next="3">ok, done that too.</button>
+            <button class="cta" data-next="3">ok, done that too...</button>
           </li>
           <li data-step="3" class="hidden">
             <p>turn onto cold chisel lane and down to trap.</p>
@@ -203,7 +203,7 @@
 
         // fri 16‑24, spill into sat 0‑1
         if (day === 5 && h >= 16) return true;
-        if (day === 6 && h < 2) return true; // 0‑1 on sat early hours
+        if (day === 6 && h < 2 && d.getDay() === 6) return true; // 0‑1 on sat early hours
 
         // sat 16‑24, spill into sun 0‑1
         if (day === 6 && h >= 16) return true;
@@ -232,25 +232,40 @@
       if (open) {
         directionsSection.classList.remove("hidden");
         openBadge.classList.remove("hidden");
-
-        // cta logic with sequential slide animation
+        // cta logic with slide animation
         document.querySelectorAll("button.cta").forEach((btn) => {
           btn.addEventListener("click", () => {
             const currLi = btn.parentElement;
-            const next = document.querySelector(`li[data-step="${btn.dataset.next}"]`);
-
             currLi.classList.add("slide-out");
-
-            // wait for slide-out to finish before bringing next in
+            const next = document.querySelector(`li[data-step="${btn.dataset.next}"]`);
+            
+            // Wait for slide-out to complete before showing next
             setTimeout(() => {
               currLi.classList.add("hidden");
               if (next) {
                 next.classList.remove("hidden");
                 next.classList.add("slide-in");
               }
-            }, 350); // match slide-out duration
+            }, 350);
           });
         });
       } else {
         countdownSection.classList.remove("hidden");
-        const target = nextOpen
+        const target = nextOpenTime(now);
+        const countdownEl = document.getElementById("countdown");
+        if (target) {
+          function tick() {
+            const diff = target - getAdelaideNow();
+            if (diff <= 0) return location.reload();
+            const hrs = String(Math.floor(diff / 3.6e6)).padStart(2, "0");
+            const mins = String(Math.floor((diff % 3.6e6) / 6e4)).padStart(2, "0");
+            const secs = String(Math.floor((diff % 6e4) / 1e3)).padStart(2, "0");
+            countdownEl.textContent = `${hrs}:${mins}:${secs}`;
+          }
+          tick();
+          setInterval(tick, 1000);
+        }
+      }
+    </script>
+  </body>
+</html>
